@@ -1,0 +1,12 @@
+extends layout
+
+mixin rowArray(...items)
+  tr
+    each item in items
+      td= item
+
+block content
+  table
+    +rowArray( "Course", "Bassin", "Temps", "Nom", "Annee", "Age", "Nationalité", "Club",  "Date", "Lieu", "Pts", "Rang", "Catégorie", "Zone", "Saison")
+    each item in nageur.getPerformances()
+      +rowArray(item.epreuve.course, item.epreuve.bassin, item.temps, nageur.nom, nageur.anneeNaissance, nageur.age, nageur.nationalite, nageur.club,  item.date, item.lieu,  item.pts, item.rang, item.epreuve.categorie, item.epreuve.zone, item.epreuve.season )
