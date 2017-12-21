@@ -18,7 +18,7 @@ module.exports = {
         lieu: "CHEVREUSE",
         nom: "20e Meeting de la Vallée",
         bassin: "25",
-        dateMeeting: "Du Vendredi 1er au Dimanche 3 Décembre 2017",
+        date: "Du Vendredi 1er au Dimanche 3 Décembre 2017",
         code: 49551
     },
     EPREUVE_1: {

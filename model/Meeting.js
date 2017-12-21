@@ -18,7 +18,7 @@ var meetingSchema = new Schema({
         enum: ['25','50'],
         required: true
     },
-    dateMeeting: {
+    date: {
         type: String,
         required: true
     },

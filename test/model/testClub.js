@@ -3,9 +3,9 @@ var chai = require('chai');
 var expect = chai.expect;
 var log = require('color-logs')(true, true, __filename);
 var mongoose = require('mongoose');
-var Club = require('../model/Club');
-var CONST = require('./constants');
-var connectDatabase = require('./tools').connectDatabase;
+var Club = require('../../model/Club');
+var CONST = require('../constants');
+var connectDatabase = require('../tools').connectDatabase;
 
 mongoose.Promise = global.Promise;
 

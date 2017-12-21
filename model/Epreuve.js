@@ -109,7 +109,6 @@ function getInstance(keyCode) {
     return Epreuve.findOne().byKeyCode(keyCode).exec();
 };
 
-
 module.exports.Instance = Epreuve;
 module.exports.createInstance = createInstance;
 module.exports.getInstance = getInstance;

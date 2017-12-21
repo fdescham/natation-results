@@ -2,9 +2,9 @@
 var chai = require('chai');
 var expect = chai.expect;
 var log = require('color-logs')(true, true, __filename);
-var CONST = require('./constants');
-var connectDatabase = require('./tools').connectDatabase;
-var Nageur = require('../model/Nageur');
+var CONST = require('../constants');
+var connectDatabase = require('../tools').connectDatabase;
+var Nageur = require('../../model/Nageur');
 
 describe('Add a new Nageur', function () {
 

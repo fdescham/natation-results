@@ -3,9 +3,9 @@ var chai = require('chai');
 var expect = chai.expect;
 var log = require('color-logs')(true, true, __filename);
 var mongoose = require('mongoose');
-var Meeting = require('../model/Meeting');
-var CONST = require('./constants');
-var connectDatabase = require('./tools').connectDatabase;
+var Meeting = require('../../model/Meeting');
+var CONST = require('../constants');
+var connectDatabase = require('../tools').connectDatabase;
 
 mongoose.Promise = global.Promise;
 
@@ -19,7 +19,7 @@ describe('Add a new Meeting', function () {
         meeting.nom = CONST.MEETING_1.nom;
         meeting.lieu = CONST.MEETING_1.lieu;
         meeting.bassin = CONST.MEETING_1.bassin;
-        meeting.dateMeeting = CONST.MEETING_1.dateMeeting;
+        meeting.date = CONST.MEETING_1.date;
         expect(meeting.validateSync(), "Meeting should contains all the required fields.").not.to.be.undefined;
         meeting.code = CONST.MEETING_1.code;
         meeting.bassin = "100";
