@@ -1,8 +1,10 @@
 var log = require('color-logs')(true, true, __filename);
 var { JSDOM } = require("jsdom");
 var mongoose = require('mongoose');
+var Club = require('../model/Club');
 var Epreuve = require('../model/Epreuve');
 var Meeting = require('../model/Meeting');
+var Nageur = require('../model/Nageur');
 
 function getMeetingCode(codeString) {
     return codeString.split('competition=')[1].split("&")[0];
@@ -65,9 +67,9 @@ function getEpreuve(dom) {
         var course = {};
         tableau.forEach(element => {
             if (element.className == "survol") {
-                var nageur = {};
+                var nageur = new Nageur.Instance();
                 var performance = {};
-                var club = {};
+                var club = new Club.Instance();
                 var tds = element.querySelectorAll("td");
                 performance.codeNageur = tds[1].querySelector("a").href.split('iuf=')[1];
                 nageur.nom = tds[1].textContent.trim();

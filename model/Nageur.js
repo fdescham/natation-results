@@ -13,7 +13,6 @@ function normalizeDate( date ) {
     else if (normalizedDate <= 30 )
         normalizedDate += 2000;
 
-    log.info(date, normalizedDate)
     return normalizedDate;
 
 };
