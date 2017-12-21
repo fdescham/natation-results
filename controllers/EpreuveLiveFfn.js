@@ -78,50 +78,51 @@ function getEpreuve(dom) {
                 club.code = tds[4].querySelector("a").href.split('structure=')[1];
                 performance.codeClub = club.code;
                 nageur.codeClub = club.code;
+                performance.temps = tds[5].textContent.replace(/[\n\t]/, " ").split(" ")[0];
+                performance.points = element.querySelector(".points").textContent.split("pt")[0].trim();
                 if (clubs.findIndex(element => element.code === club.code) === -1) {
                     clubs.push(club);
                 }
                 if (nageurs.findIndex(element => element.codeIuf === nageur.codeIuf) === -1) {
                     nageurs.push(nageur);
                 }
-                log.info("performances :", performance);
                 course.performances.push(performance);
             }
             else {
                 var titre = element.querySelector(".epreuve");
                 if (titre) {
                     if (course.performances) {
-                        log.info("course:",course);
-                        epreuve.courses.push(course); 
-                        course = {};                           
+                        epreuve.courses.push(course);
+                        course = {};
                     }
                     titre = element.textContent.replace(/(\n\t)/, "").split(/[/(/)]+/);
                     course.titre = titre[0].trim();
                     course.date = titre[1].trim();
                     course.performances = [];
-                    log.info("course:",course);
                 }
             }
         });
         if (course.performances) {
-            log.info("course:",course);
-            epreuve.courses.push(course);    
+            epreuve.courses.push(course);
         }
-        log.info("clubs :", clubs.length);
-        log.info("nageurs :", nageurs.length);
     }
     catch (e) { log.error(e); }
 
 
-    return epreuve;
+    return {
+        epreuve: epreuve,
+        clubs: clubs,
+        nageurs: nageurs
+    };
 }
 
 class EpreuveLiveFfn {
     constructor(dom) {
         this.meeting = getMeeting(dom);
-        this.epreuve = getEpreuve(dom);
-        log.info(this.meeting);
-        log.info(this.epreuve);
+        var data = getEpreuve(dom);
+        this.epreuve = data.epreuve;
+        this.nageurs = data.nageurs;
+        this.clubs = data.clubs
     }
 
     get meetingInstance() {
@@ -131,6 +132,15 @@ class EpreuveLiveFfn {
     get epreuveInstance() {
         return this.epreuve;
     }
+
+    get clubArrayInstance() {
+        return this.clubs;
+    }
+
+    get nageurArrayInstance() {
+        return this.nageurs;
+    }
+
 }
 
 function fromFile(filePath) {

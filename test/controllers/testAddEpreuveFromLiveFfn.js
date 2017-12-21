@@ -14,7 +14,13 @@ describe('Parse an Epreuve from liveFFN and update the database',function(){
     
     it('Create the class from file', function(done){
         EpreuveLiveFfn.fromFile(__dirname +"/../data/Epreuve1.html")
-        .then(epreuve =>  done() )
+        .then(epreuve =>  {
+            log.info(epreuve.meetingInstance);
+            log.info(epreuve.epreuveInstance);
+            log.info(epreuve.nageurArrayInstance);
+            log.info(epreuve.clubArrayInstance);
+            done();
+        })
         .catch(error => done(error))
     })
 });
