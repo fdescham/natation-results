@@ -1,10 +1,29 @@
-module.exports = class performance {
-    constructor(item,epreuve) {
-        this.epreuve = epreuve;
-        this.rang = item.querySelector("#mainRkgPla").textContent;
-        this.temps = item.querySelector("#mainRkgTps").textContent;
-        this.date = item.querySelector("#mainRkgDat").textContent;
-        this.pts = item.querySelector("#mainRkgPts").textContent;
-        this.lieu = item.querySelector("img").parentElement.outerHTML.split(this.date)[1].split("<")[0]; var nageurElement = item.querySelectorAll("#mainRkgNomClb");
-    }
+var mongoose = require('mongoose');
+var Schema = mongoose.Schema;
+
+function convertToNumber(temps) {
+    timeValue = temps.split(/[:.]+/);
+    return parseInt(timeValue[2])+100*(parseInt(timeValue[1])+60*parseInt(timeValue[0]));
 };
+
+var performanceSchema = new Schema({
+    codeNageur: {
+        type: Number,
+        required: true
+    },
+    codeClub: {
+        type: Number,
+        required: true
+    },
+    temps: {
+        type: Number,
+        required: true,
+        set: convertToNumber
+    },
+    points: {
+        type: Number,
+        required: true
+    }
+});
+
+module.exports.performanceSchema = performanceSchema;
