@@ -1,5 +1,10 @@
+var Club = require("./Club");
+var Nageur = require("./Nageur");
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
+var log = require('color-logs')(true, true, __filename);
+
+const PERFORMANCE_MODEL_NAME = "Performance";
 
 function convertToNumber(temps) {
     if (isNaN(parseInt(temps))) return -1;
@@ -27,13 +32,13 @@ function convertToPoint(points) {
 };
 
 var performanceSchema = new Schema({
-    codeNageur: {
-        type: Number,
-        required: true
+    nageur:  {
+        type: Schema.ObjectId,
+        ref: Nageur.MODEL_NAME
     },
-    codeClub: {
-        type: Number,
-        required: true
+    club:  {
+        type: Schema.ObjectId,
+        ref: Club.MODEL_NAME
     },
     temps: {
         type: Number,
@@ -49,4 +54,22 @@ var performanceSchema = new Schema({
     }
 });
 
-module.exports.performanceSchema = performanceSchema;
+var Performance = mongoose.model(PERFORMANCE_MODEL_NAME, performanceSchema);
+
+function createInstance(performanceObject) {
+    log.info("createInstance :", performanceObject.nageur.nom," ", performanceObject.temps);
+    return Performance.create(performanceObject);
+};
+
+function createAllInstances(performanceArray) {
+    log.info("createAllInstances ");
+    var promises = [];
+    performanceArray.forEach(performanceObject => {
+        promises.push(createInstance(performanceObject));
+    });
+    return Promise.all(promises);
+};
+
+module.exports.MODEL_NAME = PERFORMANCE_MODEL_NAME;
+module.exports.Instance = Performance;
+module.exports.createAllInstances = createAllInstances;

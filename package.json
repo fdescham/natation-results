@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "nodemon ./bin/www",
-    "test": "nodemon --exec 'mocha --recursive -R min' test"
+    "test": "nodemon --exec 'mocha --grep liveFFN --recursive -R min' test"
   },
   "dependencies": {
     "body-parser": "^1.18.2",

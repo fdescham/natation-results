@@ -1,3 +1,4 @@
+var Club = require("./Club");
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
@@ -31,9 +32,9 @@ var nageurSchema = new Schema( {
             type :String,
             required : true 
         },
-        codeClub : {
-            type :Number,
-            required : true
+        club:   {
+            type: Schema.ObjectId,
+            ref: Club.MODEL_NAME
         },
         codeIuf : {
             type :Number,
@@ -62,13 +63,11 @@ function getNageurFromRanking( item ){
 var Nageur = mongoose.model(NAGEUR_MODEL_NAME, nageurSchema);
 
 function createInstance(nageurObject) {
-    log.info("createInstance :", nageurObject);
+    log.info("createInstance :", nageurObject.nom);
     return new Promise((resolve, reject) => {
         getInstance(nageurObject.codeIuf)
             .then(nageurInstance => {
-                log.info("getInstance :",nageurInstance);
                 if (nageurInstance == null) {
-                    log.info("nageurObject :",nageurObject);
                     Nageur.create(nageurObject)
                         .then(nageurCreated => resolve(nageurCreated))
                         .catch(error => reject(error))
@@ -79,6 +78,15 @@ function createInstance(nageurObject) {
     })
 };
 
+function createAllInstances(nageurArray) {
+    log.info("createAllInstances");
+    var promises = [];
+    nageurArray.forEach(nageurObject => {
+        promises.push(createInstance(nageurObject));
+    });
+    return Promise.all(promises);
+};
+
 function getInstance(codeIuf) {
     log.info("getInstance :", codeIuf);
     return  Nageur.findOne().byCode(codeIuf).exec();
@@ -86,4 +94,6 @@ function getInstance(codeIuf) {
 
 module.exports.Instance = Nageur;
 module.exports.createInstance = createInstance;
+module.exports.createAllInstances = createAllInstances;
 module.exports.getInstance = getInstance;
+module.exports.MODEL_NAME = NAGEUR_MODEL_NAME;

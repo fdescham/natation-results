@@ -1,9 +1,24 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 var log = require('color-logs')(true, true, __filename);
-var courseSchema = require('./Course').courseSchema;
+var Course = require('./Course');
+var Performance = require('./Performance');
 
 const EPREUVE_MODEL_NAME = "Epreuve";
+
+const POPULATE_OPTIONS = {
+    path: 'courses',
+    populate: {
+        path: "performances",
+        populate: {
+            path: "nageur",
+            populate: {
+                path: "club"
+
+            }
+        }
+    }
+};
 
 var epreuveSchema = new Schema({
     epreuveCode: {
@@ -14,9 +29,12 @@ var epreuveSchema = new Schema({
         type: Number,
         required: true
     },
-    courses: [ courseSchema ]
-}
-);
+    courses: [{
+        type: Schema.ObjectId,
+        ref: Course.MODEL_NAME
+    }
+    ]
+});
 
 epreuveSchema.query.byKeyCode = function (keyCode) {
     return this.findOne(keyCode);
@@ -72,10 +90,41 @@ function updateInstance(epreuveObject) {
 
 function getInstance(keyCode) {
     log.info("getInstance :", keyCode);
-    return Epreuve.findOne().byKeyCode(keyCode).exec();
+    return Epreuve.findOne().byKeyCode(keyCode);
 };
+
+function getAllInstances(meetingCode) {
+    log.info("getAllInstances :", meetingCode);
+    return Epreuve
+        .find({ meetingCode: meetingCode })
+        .populate(POPULATE_OPTIONS);
+};
+
+function getAllInstancesByClub(meetingCode, clubCode) {
+    log.info("getAllInstancesByClub :%d %d", meetingCode, clubCode);
+    return new Promise((resolve, reject) => {
+        Epreuve
+            .find({ meetingCode: meetingCode })
+            .populate(POPULATE_OPTIONS)
+            .then(epreuveList => {
+                epreuveList.forEach(epreuveInstance => {
+                    epreuveInstance.courses
+                    .forEach(course => {
+                        course.performances = course.performances.filter(performance => performance.nageur.club.code === clubCode);
+                    });
+
+                    epreuveInstance.courses = epreuveInstance.courses.filter(course => course.performances.length > 0)
+
+                });
+                resolve(epreuveList);
+            })
+            .catch(error => { reject(error) })
+    })
+}
 
 module.exports.Instance = Epreuve;
 module.exports.createInstance = createInstance;
 module.exports.getInstance = getInstance;
+module.exports.getAllInstancesByClub = getAllInstancesByClub;
+module.exports.getAllInstances = getAllInstances;
 module.exports.updateInstance = updateInstance;

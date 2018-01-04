@@ -58,6 +58,12 @@ function getInstance(clubCode) {
     return Meeting.findOne().byCode(clubCode).exec();
 };
 
+function getAllInstances() {
+    log.info("getAllInstances");
+    return Meeting.find().exec();
+}
+
 module.exports.Instance = Meeting;
 module.exports.createInstance = createInstance;
 module.exports.getInstance = getInstance;
+module.exports.getAllInstances = getAllInstances;

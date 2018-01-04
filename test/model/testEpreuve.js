@@ -3,7 +3,9 @@ var chai = require('chai');
 var expect = chai.expect;
 var log = require('color-logs')(true, true, __filename);
 var mongoose = require('mongoose');
+var Course = require('../../model/Course');
 var Epreuve = require('../../model/Epreuve');
+var Performance = require('../../model/Performance');
 var CONST = require('../constants');
 var connectDatabase = require('../tools').connectDatabase;
 
@@ -30,8 +32,8 @@ function checkEpreuve(epreuveFrom, epreuveTo) {
 describe('Add a new Epreuve', function () {
     var epreuve = new Epreuve.Instance();
     var epreuveToCheck = new Epreuve.Instance(CONST.EPREUVE_1);
-    epreuveToCheck.courses.push(CONST.EPREUVE_1_COURSES[0]);
-    epreuveToCheck.courses[0].performances = CONST.COURSES_1_PERFORMANCES;
+    epreuveToCheck.courses.push(new Course.Instance(CONST.EPREUVE_1_COURSES[0]));
+    epreuveToCheck.courses[0].performances = new Performance.Instance(CONST.COURSES_1_PERFORMANCES);
     var epreuveKey = {
         epreuveCode: CONST.EPREUVE_1.epreuveCode,
         meetingCode: CONST.EPREUVE_1.meetingCode

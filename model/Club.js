@@ -23,13 +23,11 @@ clubSchema.query.byCode = function( code ){
 var Club = mongoose.model(CLUB_MODEL_NAME, clubSchema);
 
 function createInstance(clubObject) {
-    log.info("createInstance :", clubObject);
+    log.info("createInstance :", clubObject.nom);
     return new Promise((resolve, reject) => {
         getInstance(clubObject.code)
             .then(clubInstance => {
-                log.info("getInstance :",clubInstance);
                 if (clubInstance == null) {
-                    log.info("clubObject :",clubObject);
                     Club.create(clubObject)
                         .then(clubCreated => resolve(clubCreated))
                         .catch(error => reject(error))
@@ -40,11 +38,22 @@ function createInstance(clubObject) {
     })
 };
 
+function createAllInstances(clubArray) {
+    log.info("createAllInstances");
+    var promises = [];
+    clubArray.forEach(clubObject => {
+        promises.push(createInstance(clubObject));
+    });
+    return Promise.all(promises);
+};
+
 function getInstance(clubCode) {
     log.info("getInstance :", clubCode);
     return  Club.findOne().byCode(clubCode).exec();
 };
 
 module.exports.Instance = Club;
+module.exports.createAllInstances = createAllInstances;
 module.exports.createInstance = createInstance;
 module.exports.getInstance = getInstance;
+module.exports.MODEL_NAME = CLUB_MODEL_NAME;

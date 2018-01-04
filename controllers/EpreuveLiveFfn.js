@@ -2,9 +2,11 @@ var log = require('color-logs')(true, true, __filename);
 var { JSDOM } = require("jsdom");
 var mongoose = require('mongoose');
 var Club = require('../model/Club');
+var Course = require('../model/Course');
 var Epreuve = require('../model/Epreuve');
 var Meeting = require('../model/Meeting');
 var Nageur = require('../model/Nageur');
+var Performance = require('../model/Performance');
 
 function getMeetingCode(codeString) {
     return codeString.split('competition=')[1].split("&")[0];
@@ -49,6 +51,8 @@ function getEpreuve(dom) {
     var epreuve = new Epreuve.Instance();
     var nageurs = [];
     var clubs = [];
+    var courses = [];
+    var performances = [];
     var epreuveCode = dom.window.document.querySelectorAll(".options option:selected");
     try {
         if (epreuveCode[0].value.length > 0) {
@@ -64,48 +68,62 @@ function getEpreuve(dom) {
 
     try {
         var tableau = dom.window.document.querySelectorAll(".tableau tr");
-        var course = {};
+        var course = new Course.Instance();
         tableau.forEach(element => {
             if (element.className == "survol") {
-                var nageur = new Nageur.Instance();
-                var performance = {};
-                var club = new Club.Instance();
                 var tds = element.querySelectorAll("td");
-                performance.codeNageur = tds[1].querySelector("a").href.split('iuf=')[1];
-                nageur.nom = tds[1].textContent.trim();
-                nageur.codeIuf = performance.codeNageur;
-                nageur.anneeNaissance = tds[2].textContent.trim();
-                nageur.nationalite = tds[3].textContent.trim();
+                // Get Club Information.
+                var club = new Club.Instance();
                 club.nom = tds[4].textContent.trim();
                 club.code = tds[4].querySelector("a").href.split('structure=')[1];
-                performance.codeClub = club.code;
-                nageur.codeClub = club.code;
-                performance.temps = tds[5].textContent.replace(/[\n\t]/, " ").split(" ")[0];
-                performance.points = element.querySelector(".points").textContent.split("pt")[0].trim();
-                if (clubs.findIndex(element => element.code === club.code) === -1) {
+                if ((foundClub = clubs.find(element => element.code === club.code)) === undefined) {
                     clubs.push(club);
                 }
-                if (nageurs.findIndex(element => element.codeIuf === nageur.codeIuf) === -1) {
+                else {
+                    club = foundClub;
+                }
+
+                // Get Nageur Information.
+                var nageur = new Nageur.Instance();
+                nageur.codeIuf = tds[1].querySelector("a").href.split('iuf=')[1];
+                nageur.nom = tds[1].textContent.trim();
+                nageur.anneeNaissance = tds[2].textContent.trim();
+                nageur.nationalite = tds[3].textContent.trim();
+                nageur.club = club;
+                if ((found_nageur = nageurs.find(element => element.codeIuf === nageur.codeIuf)) === undefined) {
                     nageurs.push(nageur);
                 }
+                else {
+                    nageur = found_nageur;
+                }
+
+                // Get Performance Information.
+                var performance = new Performance.Instance();
+                performance.nageur = nageur;
+                performance.club = club;
+                performance.temps = tds[5].textContent.replace(/[\n\t]/, " ").split(" ")[0];
+                performance.points = element.querySelector(".points").textContent.split("pt")[0].trim();
                 course.performances.push(performance);
+                performances.push(performance);
+
             }
             else {
                 var titre = element.querySelector(".epreuve");
                 if (titre) {
-                    if (course.performances) {
+                    if (course.performances != 0) {
                         epreuve.courses.push(course);
-                        course = {};
+                        courses.push(course);
+                        course = new Course.Instance();
                     }
                     titre = element.textContent.replace(/(\n\t)/, "").split(/[/(/)]+/);
                     course.titre = titre[0].trim();
                     course.date = titre[1].trim();
-                    course.performances = [];
                 }
             }
         });
-        if (course.performances) {
+        if (course.performances.length != 0) {
             epreuve.courses.push(course);
+            courses.push(course);
         }
     }
     catch (e) { log.error(e); }
@@ -114,7 +132,9 @@ function getEpreuve(dom) {
     return {
         epreuve: epreuve,
         clubs: clubs,
-        nageurs: nageurs
+        nageurs: nageurs,
+        courses: courses,
+        performances: performances,
     };
 }
 
@@ -124,7 +144,18 @@ class EpreuveLiveFfn {
         var data = getEpreuve(dom);
         this.epreuve = data.epreuve;
         this.nageurs = data.nageurs;
-        this.clubs = data.clubs
+        this.clubs = data.clubs;
+        this.courses = data.courses;
+        this.performances = data.performances;
+
+        log.info("Epreuve = ", this.epreuve);
+
+        this.clubs.forEach(club => {
+            log.info("club = ", club);
+        });
+        this.nageurs.forEach(nageur => {
+            log.info("nageur = ", nageur);
+        })
     }
 
     get meetingInstance() {
@@ -143,6 +174,29 @@ class EpreuveLiveFfn {
         return this.nageurs;
     }
 
+    get courseArrayInstance() {
+        return this.courses;
+    }
+
+    get performanceArrayInstance() {
+        return this.performances;
+    }
+
+    get meetingInstance() {
+        return this.meeting;
+    }
+
+    saveAllData() {
+        var promises = [];
+
+        promises.push(Club.createAllInstances(this.clubs));
+        promises.push(Nageur.createAllInstances(this.nageurs));
+        promises.push(Performance.createAllInstances(this.performances));
+        promises.push(Course.createAllInstances(this.courses));
+        promises.push(Epreuve.createInstance(this.epreuve));
+        
+        return Promise.all(promises);
+    }
 }
 
 function fromFile(filePath) {
