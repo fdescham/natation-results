@@ -1,7 +1,7 @@
 module.exports = {
     CLUB_1: {
         nom: "CSN GUYANCOURT",
-        code: 1196
+        code: 1156
     },
     CLUB_2: {
         nom: "CNEPE",
@@ -11,7 +11,7 @@ module.exports = {
         nom: "DESCHAMP Fabrice",
         anneeNaissance: 71,
         nationalite: "FRA",
-        codeClub: 1196,
+        codeClub: 1156,
         codeIuf: 1801793
     },
     MEETING_1: {

@@ -62,7 +62,7 @@ function createInstance(performanceObject) {
 };
 
 function createAllInstances(performanceArray) {
-    log.info("createAllInstances ");
+    log.info("createAllInstances ", performanceArray.length);
     var promises = [];
     performanceArray.forEach(performanceObject => {
         promises.push(createInstance(performanceObject));

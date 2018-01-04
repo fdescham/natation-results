@@ -63,11 +63,11 @@ function getNageurFromRanking( item ){
 var Nageur = mongoose.model(NAGEUR_MODEL_NAME, nageurSchema);
 
 function createInstance(nageurObject) {
-    log.info("createInstance :", nageurObject.nom);
     return new Promise((resolve, reject) => {
         getInstance(nageurObject.codeIuf)
             .then(nageurInstance => {
                 if (nageurInstance == null) {
+                    log.info("create a new Instance :", nageurObject.nom);                    
                     Nageur.create(nageurObject)
                         .then(nageurCreated => resolve(nageurCreated))
                         .catch(error => reject(error))
@@ -88,7 +88,6 @@ function createAllInstances(nageurArray) {
 };
 
 function getInstance(codeIuf) {
-    log.info("getInstance :", codeIuf);
     return  Nageur.findOne().byCode(codeIuf).exec();
 };
 

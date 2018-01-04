@@ -122,9 +122,32 @@ function getAllInstancesByClub(meetingCode, clubCode) {
     })
 }
 
+function getAllInstancesBySwimmer(meetingCode, nageurCode) {
+    log.info("getAllInstancesBySwimmer :%d %d", meetingCode, nageurCode);
+    return new Promise((resolve, reject) => {
+        Epreuve
+            .find({ meetingCode: meetingCode })
+            .populate(POPULATE_OPTIONS)
+            .then(epreuveList => {
+                epreuveList.forEach(epreuveInstance => {
+                    epreuveInstance.courses
+                    .forEach(course => {
+                        course.performances = course.performances.filter(performance => performance.nageur.codeIuf === nageurCode);
+                    });
+
+                    epreuveInstance.courses = epreuveInstance.courses.filter(course => course.performances.length > 0)
+
+                });
+                resolve(epreuveList);
+            })
+            .catch(error => { reject(error) })
+    })
+}
+
 module.exports.Instance = Epreuve;
 module.exports.createInstance = createInstance;
 module.exports.getInstance = getInstance;
 module.exports.getAllInstancesByClub = getAllInstancesByClub;
+module.exports.getAllInstancesBySwimmer = getAllInstancesBySwimmer;
 module.exports.getAllInstances = getAllInstances;
 module.exports.updateInstance = updateInstance;

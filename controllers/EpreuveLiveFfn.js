@@ -76,12 +76,6 @@ function getEpreuve(dom) {
                 var club = new Club.Instance();
                 club.nom = tds[4].textContent.trim();
                 club.code = tds[4].querySelector("a").href.split('structure=')[1];
-                if ((foundClub = clubs.find(element => element.code === club.code)) === undefined) {
-                    clubs.push(club);
-                }
-                else {
-                    club = foundClub;
-                }
 
                 // Get Nageur Information.
                 var nageur = new Nageur.Instance();
@@ -89,6 +83,18 @@ function getEpreuve(dom) {
                 nageur.nom = tds[1].textContent.trim();
                 nageur.anneeNaissance = tds[2].textContent.trim();
                 nageur.nationalite = tds[3].textContent.trim();
+
+                // Get Performance Information.
+                var performance = new Performance.Instance();
+                performance.temps = tds[5].textContent.replace(/[\n\t]/, " ").split(" ")[0];
+                performance.points = element.querySelector(".points").textContent.split("pt")[0].trim();
+
+                if ((foundClub = clubs.find(element => element.code === club.code)) === undefined) {
+                    clubs.push(club);
+                }
+                else {
+                    club = foundClub;
+                }
                 nageur.club = club;
                 if ((found_nageur = nageurs.find(element => element.codeIuf === nageur.codeIuf)) === undefined) {
                     nageurs.push(nageur);
@@ -96,16 +102,22 @@ function getEpreuve(dom) {
                 else {
                     nageur = found_nageur;
                 }
-
                 // Get Performance Information.
-                var performance = new Performance.Instance();
                 performance.nageur = nageur;
                 performance.club = club;
-                performance.temps = tds[5].textContent.replace(/[\n\t]/, " ").split(" ")[0];
-                performance.points = element.querySelector(".points").textContent.split("pt")[0].trim();
                 course.performances.push(performance);
                 performances.push(performance);
 
+                Club.getInstance(club.code).then( clubInstance => { 
+                    if (clubInstance) club._id = clubInstance._id;
+                })
+                Nageur.getInstance(nageur.codeIuf).then( nageurInstance => { 
+                    if (nageurInstance) {
+                        nageur._id = nageurInstance._id;
+                        nageur.club = nageurInstance.club;
+                    }
+                })
+                
             }
             else {
                 var titre = element.querySelector(".epreuve");
@@ -125,6 +137,8 @@ function getEpreuve(dom) {
             epreuve.courses.push(course);
             courses.push(course);
         }
+
+
     }
     catch (e) { log.error(e); }
 
@@ -151,10 +165,11 @@ class EpreuveLiveFfn {
         log.info("Epreuve = ", this.epreuve);
 
         this.clubs.forEach(club => {
-            log.info("club = ", club);
+            log.info("club = ", club.nom, ' - ', club._id);
         });
+
         this.nageurs.forEach(nageur => {
-            log.info("nageur = ", nageur);
+            log.info("nageur = ", nageur.nom, ' - ', nageur._id);
         })
     }
 
@@ -188,13 +203,12 @@ class EpreuveLiveFfn {
 
     saveAllData() {
         var promises = [];
-
         promises.push(Club.createAllInstances(this.clubs));
         promises.push(Nageur.createAllInstances(this.nageurs));
         promises.push(Performance.createAllInstances(this.performances));
         promises.push(Course.createAllInstances(this.courses));
         promises.push(Epreuve.createInstance(this.epreuve));
-        
+
         return Promise.all(promises);
     }
 }
