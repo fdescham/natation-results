@@ -14,7 +14,6 @@ const POPULATE_OPTIONS = {
             path: "nageur",
             populate: {
                 path: "club"
-
             }
         }
     }
@@ -93,11 +92,33 @@ function getInstance(keyCode) {
     return Epreuve.findOne().byKeyCode(keyCode);
 };
 
+function sortPerformance(a, b) {
+    aTemps = Performance.convertToNumber(a.temps);
+    bTemps = Performance.convertToNumber(b.temps);
+
+    if (aTemps == -1)  return 1;
+    if (bTemps == -1)  return -1;
+
+    return aTemps - bTemps;
+}
+
 function getAllInstances(meetingCode) {
     log.info("getAllInstances :", meetingCode);
-    return Epreuve
-        .find({ meetingCode: meetingCode })
-        .populate(POPULATE_OPTIONS);
+    return new Promise((resolve, reject) => {
+        Epreuve
+            .find({ meetingCode: meetingCode })
+            .populate(POPULATE_OPTIONS)
+            .then(epreuveList => {
+                epreuveList.forEach(epreuveInstance => {
+                    epreuveInstance.courses
+                        .forEach(course => {
+                            course.performances = course.performances.sort(sortPerformance);
+                        });
+                });
+                resolve(epreuveList);
+            })
+            .catch(error => { reject(error) });
+    })
 };
 
 function getAllInstancesByClub(meetingCode, clubCode) {
@@ -109,9 +130,9 @@ function getAllInstancesByClub(meetingCode, clubCode) {
             .then(epreuveList => {
                 epreuveList.forEach(epreuveInstance => {
                     epreuveInstance.courses
-                    .forEach(course => {
-                        course.performances = course.performances.filter(performance => performance.nageur.club.code === clubCode);
-                    });
+                        .forEach(course => {
+                            course.performances = course.performances.filter(performance => performance.nageur.club.code === clubCode).sort(sortPerformance);
+                        });
 
                     epreuveInstance.courses = epreuveInstance.courses.filter(course => course.performances.length > 0)
 
@@ -131,9 +152,9 @@ function getAllInstancesBySwimmer(meetingCode, nageurCode) {
             .then(epreuveList => {
                 epreuveList.forEach(epreuveInstance => {
                     epreuveInstance.courses
-                    .forEach(course => {
-                        course.performances = course.performances.filter(performance => performance.nageur.codeIuf === nageurCode);
-                    });
+                        .forEach(course => {
+                            course.performances = course.performances.filter(performance => performance.nageur.codeIuf === nageurCode);
+                        });
 
                     epreuveInstance.courses = epreuveInstance.courses.filter(course => course.performances.length > 0)
 

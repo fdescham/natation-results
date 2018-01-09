@@ -3,7 +3,7 @@ var chai = require('chai');
 var expect = chai.expect;
 var log = require('color-logs')(true, true, __filename);
 var mongoose = require('mongoose');
-var EpreuveLiveFfn = require('../../controllers/EpreuveLiveFfn');
+var EpreuveLiveFfn = require('../../controllers/EpreuveLiveFfn').EpreuveLiveFfn;
 var Epreuve = require("../../model/Epreuve");
 var Meeting = require("../../model/Meeting");
 var CONST = require('../constants');
@@ -13,13 +13,13 @@ function retrieveAllEpreuves(meetingCodeList, done) {
     meetingCodeList.forEach(meetingCode => {
         Epreuve.getAllInstances(meetingCode)
             .then(epreuveList => {
-                log.info("epreuveList :", epreuveList);
+                log.info("retrieveAllEpreuves : epreuveList :", epreuveList);
                 epreuveList.forEach(epreuveInstance => {
-                    log.info("epreuveInstance :", epreuveInstance);
+                    log.info("retrieveAllEpreuves : epreuveInstance :", epreuveInstance.epreuveCode);
                     epreuveInstance.courses.forEach(course => {
-                        log.info("course :", course.titre);
+                        log.info("retrieveAllEpreuves : course :", course.titre);
                         course.performances.forEach(performance => {
-                            log.info("performance :", performance.temps,' ', performance.nageur.nom);
+                            log.info("retrieveAllEpreuves : performance :", performance.temps,' ', performance.nageur ? performance.nageur.nom : null);
                         })
                     })
                 });
@@ -33,12 +33,13 @@ function retrieveAllEpreuvesByClub(meetingCodeList, clubCode, done) {
     meetingCodeList.forEach(meetingCode => {
         Epreuve.getAllInstancesByClub(meetingCode, clubCode)
             .then(epreuveList => {
-                log.info("Get all the performance of a Club from a meeting");
+                log.info("retrieveAllEpreuvesByClub : epreuveList :", epreuveList);
                 epreuveList.forEach(epreuveInstance => {
+                    log.info("retrieveAllEpreuvesByClub : epreuveInstance :", epreuveInstance.epreuveCode);
                     epreuveInstance.courses.forEach(course => {
-                        log.info("%s - %s", course.titre, course.date);
+                        log.info("retrieveAllEpreuvesByClub : course :", course.titre);
                         course.performances.forEach(performance => {
-                            log.info("%s %s [%s] %s  %d pts", performance.nageur.nom, performance.nageur.codeIuf, performance.nageur.club.nom, performance.temps, performance.points)
+                            log.info("retrieveAllEpreuvesByClub : performance :", performance.temps,' ', performance.nageur ? performance.nageur.nom : null);
                         })
                     })
                 });
@@ -52,12 +53,13 @@ function retrieveAllEpreuvesBySwimmer(meetingCodeList, nageurCode, done) {
     meetingCodeList.forEach(meetingCode => {
         Epreuve.getAllInstancesBySwimmer(meetingCode, nageurCode)
             .then(epreuveList => {
-                log.info("Get all the performance of a Nageur from a meeting : epreuveList ",epreuveList);
+                log.info("retrieveAllEpreuvesBySwimmer : epreuveList :", epreuveList);
                 epreuveList.forEach(epreuveInstance => {
+                    log.info("retrieveAllEpreuvesBySwimmer : epreuveInstance :", epreuveInstance.epreuveCode);
                     epreuveInstance.courses.forEach(course => {
-                        log.info("%s - %s", course.titre, course.date);
+                        log.info("retrieveAllEpreuvesBySwimmer : course :", course.titre);                        
                         course.performances.forEach(performance => {
-                            log.info("%s [%s] %s  %d pts", performance.nageur.nom, performance.nageur.club.nom, performance.temps, performance.points)
+                            log.info("retrieveAllEpreuvesBySwimmer : performance :", performance.temps,' ', performance.nageur ? performance.nageur.nom : null);
                         })
                     })
                 });
@@ -138,7 +140,7 @@ describe('Parse another Epreuve from liveFFN and update the database', function 
     var epreuveLiveFfn = {};
 
     it('Retrieve another Epreuve information from file', function (done) {
-        EpreuveLiveFfn.fromFile(__dirname + "/../data/Epreuve2.html")
+        EpreuveLiveFfn.fromFile(__dirname + "/../data/Epreuve3.html")
             .then(epreuve => {
                 epreuveLiveFfn = epreuve;
                 return Meeting.createInstance(epreuveLiveFfn.meetingInstance)

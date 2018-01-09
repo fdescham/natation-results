@@ -73,3 +73,4 @@ function createAllInstances(performanceArray) {
 module.exports.MODEL_NAME = PERFORMANCE_MODEL_NAME;
 module.exports.Instance = Performance;
 module.exports.createAllInstances = createAllInstances;
+module.exports.convertToNumber = convertToNumber;
