@@ -62,6 +62,15 @@ function createInstance(epreuveObject) {
     })
 };
 
+function createAllInstances(epreuveArray) {
+    log.info("createAllInstances ", epreuveArray.length);
+    var promises = [];
+    epreuveArray.forEach(epreuveObject => {
+        promises.push(createInstance(epreuveObject));
+    });
+    return Promise.all(promises);
+};
+
 function updateInstance(epreuveObject) {
     log.info("updateInstance :", epreuveObject);
     var keyCode = {
@@ -166,6 +175,7 @@ function getAllInstancesBySwimmer(meetingCode, nageurCode) {
 }
 
 module.exports.Instance = Epreuve;
+module.exports.createAllInstances = createAllInstances;
 module.exports.createInstance = createInstance;
 module.exports.getInstance = getInstance;
 module.exports.getAllInstancesByClub = getAllInstancesByClub;

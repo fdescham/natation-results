@@ -3,7 +3,7 @@ var chai = require('chai');
 var expect = chai.expect;
 var log = require('color-logs')(true, true, __filename);
 var mongoose = require('mongoose');
-var EpreuveLiveFfn = require('../../controllers/EpreuveLiveFfn').EpreuveLiveFfn;
+var MeetingLiveFfn = require('../../controllers/MeetingLiveFfn').MeetingLiveFfn;
 var Epreuve = require("../../model/Epreuve");
 var Meeting = require("../../model/Meeting");
 var CONST = require('../constants');
@@ -70,14 +70,14 @@ function retrieveAllEpreuvesBySwimmer(meetingCodeList, nageurCode, done) {
 }
 
 
-describe('Parse an Epreuve from liveFFN and update the database', function () {
+describe('Parse an Epreuve from liveFFN fakeServer and update the database', function () {
 
     before("Initialize Database", function (done) { return connectDatabase(done); });
 
     var epreuveLiveFfn = {};
 
     it('Retrieve Epreuve information from file', function (done) {
-        EpreuveLiveFfn.fromFile(__dirname + "/../data/Epreuve1.html")
+        MeetingLiveFfn.fromFile(__dirname + "/../data/Epreuve1.html")
             .then(epreuve => {
                 epreuveLiveFfn = epreuve;
                 done();
@@ -106,7 +106,7 @@ describe('Parse an Epreuve from liveFFN and update the database', function () {
 
 });
 
-describe('Retrieve Meeting information saved from liveFFN from the database', function () {
+describe('Retrieve Meeting information saved from liveFFN fakeServer from the database', function () {
     var meetingCodeList = [];
 
     it('Get all the Meetings', function (done) {
@@ -135,12 +135,12 @@ describe('Retrieve Meeting information saved from liveFFN from the database', fu
     })
 });
 
-describe('Parse another Epreuve from liveFFN and update the database', function () {
+describe('Parse another Epreuve from liveFFN fakeServer and update the database', function () {
 
     var epreuveLiveFfn = {};
 
     it('Retrieve another Epreuve information from file', function (done) {
-        EpreuveLiveFfn.fromFile(__dirname + "/../data/Epreuve3.html")
+        MeetingLiveFfn.fromFile(__dirname + "/../data/Epreuve3.html")
             .then(epreuve => {
                 epreuveLiveFfn = epreuve;
                 return Meeting.createInstance(epreuveLiveFfn.meetingInstance)
@@ -158,7 +158,7 @@ describe('Parse another Epreuve from liveFFN and update the database', function 
 
 });
 
-describe('Retrieve Meeting information saved from liveFFN from the database', function () {
+describe('Retrieve Meeting information saved from liveFFN fakeServer from the database', function () {
     var meetingCodeList = [];
 
     it('Get all the Meetings', function (done) {

@@ -9,6 +9,12 @@ var Meeting = require('../model/Meeting');
 var Nageur = require('../model/Nageur');
 var Performance = require('../model/Performance');
 
+const OPTIONS_URL = {
+    headers: {
+        'User-Agent': 'request'
+    }
+};
+
 function getMeetingCode(codeString) {
     return codeString.split('competition=')[1].split("&")[0];
 }
@@ -132,11 +138,10 @@ function getEpreuve(dom) {
     return epreuve;
 }
 
-class EpreuveLiveFfn {
-    constructor(dom) {
-        this.dom = dom;
+class MeetingLiveFfn {
+    constructor() {
         this.meeting = {};
-        this.epreuve = {};
+        this.epreuves = [];
         this.nageurs = [];
         this.clubs = [];
         this.courses = [];
@@ -147,8 +152,8 @@ class EpreuveLiveFfn {
         return this.meeting;
     }
 
-    get epreuveInstance() {
-        return this.epreuve;
+    get epreuveArrayInstance() {
+        return this.epreuves;
     }
 
     get clubArrayInstance() {
@@ -171,12 +176,12 @@ class EpreuveLiveFfn {
         return this.meeting;
     }
 
-    getEpreuveData() {
+    getEpreuveData(dom) {
         return new Promise((resolve, reject) => {
-            this.epreuve = getEpreuve(this.dom);
+            var epreuve = getEpreuve(dom);
 
             try {
-                var tableau = this.dom.window.document.querySelectorAll(".tableau tr");
+                var tableau = dom.window.document.querySelectorAll(".tableau tr");
                 var course, newCourse, performanceToBeTreated = 0;
                 tableau.forEach(async (element, index, array) => {
                     if (element.className == "survol") {
@@ -192,10 +197,12 @@ class EpreuveLiveFfn {
                         performanceToBeTreated--;
                         myCourse.toBeTreated--;
                         if (myCourse.toBeTreated == 0) {
-                            this.epreuve.courses.push(myCourse);
+                            epreuve.courses.push(myCourse);
                             this.courses.push(myCourse);
                         }
-                        if (performanceToBeTreated == 0) resolve(this);
+                        if (performanceToBeTreated == 0) {
+                            resolve(epreuve);
+                        }
                     }
                     else {
                         var newCourse = getCourse(element);
@@ -209,22 +216,17 @@ class EpreuveLiveFfn {
         })
     }
 
-    getData() {
+    getData(dom) {
         return new Promise((resolve, reject) => {
-            this.meeting = getMeeting(this.dom);
+            this.meeting = getMeeting(dom);
 
-            this.getEpreuveData()
-                .then(data => {
-                    this.epreuve = data.epreuve;
-                    this.nageurs = data.nageurs;
-                    this.clubs = data.clubs;
-                    this.courses = data.courses;
-                    this.performances = data.performances;
+            this.getEpreuveData(dom)
+                .then(epreuve => {
+                    this.epreuves.push( epreuve) ;
 
-                    this.epreuve.courses.forEach(course => {
+                    epreuve.courses.forEach(course => {
                         log.info("course = ", course.titre, ' - ', course.performances.length);
                     });
-                    log.info("Epreuve = ", this.epreuve.courses[0].performances);
 
                     this.clubs.forEach(club => {
                         log.info("club = ", club.nom, ' - ', club._id);
@@ -234,7 +236,7 @@ class EpreuveLiveFfn {
                         log.info("nageur = ", nageur.nom, ' - ', nageur._id);
                     });
 
-                    resolve(this);
+                    resolve(epreuve);
                 })
                 .catch(reject);
         })
@@ -242,14 +244,54 @@ class EpreuveLiveFfn {
 
     static fromFile(filePath) {
         return new Promise((resolve, reject) => {
+            var meeting = new MeetingLiveFfn();
             JSDOM.fromFile(filePath)
                 .then(dom => {
-                    return new EpreuveLiveFfn(dom).getData();
+                    return meeting.getData(dom);
                 })
                 .then(epreuveUpdated => {
-                    resolve(epreuveUpdated);
+                    resolve(meeting);
                 })
                 .catch(error => { reject(error) })
+        })
+    }
+
+    fromUrl(urlPath) {
+        return new Promise((resolve, reject) => {
+            log.info("fromUrl :", urlPath);
+            JSDOM.fromURL(urlPath, OPTIONS_URL)
+                .then(dom => {
+                    return this.getData(dom);
+                })
+                .then(epreuveUpdated => {
+                    log.info(urlPath, "epreuveUpdated :", epreuveUpdated.meetingCode, epreuveUpdated.epreuveCode );
+                    resolve(epreuveUpdated);
+                })
+                .catch(reject);
+        })
+    }
+
+    static getAllMeetingEpreuve(competitionCode) {
+        return new Promise((resolve, reject) => {
+            var meeting = new MeetingLiveFfn();            
+            JSDOM.fromURL("http://www.liveffn.com/cgi-bin/resultats.php?competition="+competitionCode+"&langue=fra&go=epreuve", OPTIONS_URL)
+                .then(dom => {
+                    var epreuveListUrl = Array.from(dom.window.document.querySelectorAll(".options option")).filter(url => url.value !="").map(element => element.value);
+                    var promises = [];
+                    epreuveListUrl.forEach( element => {
+                        promises.push(meeting.fromUrl(element));
+                    })
+                    return Promise.all(promises);
+                })
+                .then( epreuveList  => {
+                    epreuveList.forEach( epreuve => {
+                        epreuve.courses.forEach( course => {
+                            log.info("epreuve : ", course.date, " ", course.titre);
+                        })  
+                    })
+                    resolve(meeting)
+                })
+                .catch(reject);
         })
     }
 
@@ -259,7 +301,7 @@ class EpreuveLiveFfn {
         promises.push(Nageur.createAllInstances(this.nageurs));
         promises.push(Performance.createAllInstances(this.performances));
         promises.push(Course.createAllInstances(this.courses));
-        promises.push(Epreuve.createInstance(this.epreuve));
+        promises.push(Epreuve.createAllInstances(this.epreuves));
 
         return Promise.all(promises);
     }
@@ -267,4 +309,4 @@ class EpreuveLiveFfn {
 
 
 
-module.exports.EpreuveLiveFfn = EpreuveLiveFfn;
+module.exports.MeetingLiveFfn = MeetingLiveFfn;
