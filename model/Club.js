@@ -3,6 +3,9 @@ var Schema = mongoose.Schema;
 var log = require('color-logs')(true, true, __filename);
 
 const CLUB_MODEL_NAME = "Club";
+const UNDEFINED_NAME = "";
+const UNDEFINED_CODE = 0;
+
 
 var clubSchema = new Schema({
     nom: {
@@ -59,3 +62,4 @@ module.exports.createAllInstances = createAllInstances;
 module.exports.createInstance = createInstance;
 module.exports.getInstance = getInstance;
 module.exports.MODEL_NAME = CLUB_MODEL_NAME;
+module.exports.UNDEFINED_CODE = UNDEFINED_CODE;

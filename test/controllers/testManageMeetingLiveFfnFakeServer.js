@@ -8,67 +8,9 @@ var Epreuve = require("../../model/Epreuve");
 var Meeting = require("../../model/Meeting");
 var CONST = require('../constants');
 var connectDatabase = require('../tools').connectDatabase;
-
-function retrieveAllEpreuves(meetingCodeList, done) {
-    meetingCodeList.forEach(meetingCode => {
-        Epreuve.getAllInstances(meetingCode)
-            .then(epreuveList => {
-                log.info("retrieveAllEpreuves : epreuveList :", epreuveList);
-                epreuveList.forEach(epreuveInstance => {
-                    log.info("retrieveAllEpreuves : epreuveInstance :", epreuveInstance.epreuveCode);
-                    epreuveInstance.courses.forEach(course => {
-                        log.info("retrieveAllEpreuves : course :", course.titre);
-                        course.performances.forEach(performance => {
-                            log.info("retrieveAllEpreuves : performance :", performance.temps,' ', performance.nageur ? performance.nageur.nom : null);
-                        })
-                    })
-                });
-                done();
-            })
-            .catch(e => done(e));
-    });
-}
-
-function retrieveAllEpreuvesByClub(meetingCodeList, clubCode, done) {
-    meetingCodeList.forEach(meetingCode => {
-        Epreuve.getAllInstancesByClub(meetingCode, clubCode)
-            .then(epreuveList => {
-                log.info("retrieveAllEpreuvesByClub : epreuveList :", epreuveList);
-                epreuveList.forEach(epreuveInstance => {
-                    log.info("retrieveAllEpreuvesByClub : epreuveInstance :", epreuveInstance.epreuveCode);
-                    epreuveInstance.courses.forEach(course => {
-                        log.info("retrieveAllEpreuvesByClub : course :", course.titre);
-                        course.performances.forEach(performance => {
-                            log.info("retrieveAllEpreuvesByClub : performance :", performance.temps,' ', performance.nageur ? performance.nageur.nom : null);
-                        })
-                    })
-                });
-                done();
-            })
-            .catch(e => done(e));
-    });
-}
-
-function retrieveAllEpreuvesBySwimmer(meetingCodeList, nageurCode, done) {
-    meetingCodeList.forEach(meetingCode => {
-        Epreuve.getAllInstancesBySwimmer(meetingCode, nageurCode)
-            .then(epreuveList => {
-                log.info("retrieveAllEpreuvesBySwimmer : epreuveList :", epreuveList);
-                epreuveList.forEach(epreuveInstance => {
-                    log.info("retrieveAllEpreuvesBySwimmer : epreuveInstance :", epreuveInstance.epreuveCode);
-                    epreuveInstance.courses.forEach(course => {
-                        log.info("retrieveAllEpreuvesBySwimmer : course :", course.titre);                        
-                        course.performances.forEach(performance => {
-                            log.info("retrieveAllEpreuvesBySwimmer : performance :", performance.temps,' ', performance.nageur ? performance.nageur.nom : null);
-                        })
-                    })
-                });
-                done();
-            })
-            .catch(e => done(e));
-    });
-}
-
+var retrieveAllEpreuves = require('../controllers/testMeetingTools').retrieveAllEpreuves;
+var retrieveAllEpreuvesByClub = require('../controllers/testMeetingTools').retrieveAllEpreuvesByClub;
+var retrieveAllEpreuvesBySwimmer = require('../controllers/testMeetingTools').retrieveAllEpreuvesBySwimmer;
 
 describe('Parse an Epreuve from liveFFN fakeServer and update the database', function () {
 
@@ -83,16 +25,6 @@ describe('Parse an Epreuve from liveFFN fakeServer and update the database', fun
                 done();
             })
             .catch(error => done(error))
-    })
-
-    it('Save the meeting info', function (done) {
-        log.info(epreuveLiveFfn.meetingInstance);
-        Meeting.createInstance(epreuveLiveFfn.meetingInstance)
-            .then(meetingInstance => {
-                log.info('%s  %s  %s bassin : %d m ', meetingInstance.lieu, meetingInstance.nom, meetingInstance.date, meetingInstance.bassin);
-                done();
-            })
-            .catch(e => done(e));
     })
 
     it('Save all the epreuve info', function (done) {

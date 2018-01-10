@@ -57,7 +57,7 @@ var performanceSchema = new Schema({
 var Performance = mongoose.model(PERFORMANCE_MODEL_NAME, performanceSchema);
 
 function createInstance(performanceObject) {
-    log.info("createInstance :", performanceObject.nageur.nom," ", performanceObject.temps);
+    //log.info("createInstance :", performanceObject.nageur.nom," ", performanceObject.temps);
     return Performance.create(performanceObject);
 };
 

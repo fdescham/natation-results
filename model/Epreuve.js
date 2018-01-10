@@ -146,6 +146,7 @@ function getAllInstancesByClub(meetingCode, clubCode) {
                     epreuveInstance.courses = epreuveInstance.courses.filter(course => course.performances.length > 0)
 
                 });
+                epreuveList = epreuveList.filter(epreuve => epreuve.courses.length > 0);                
                 resolve(epreuveList);
             })
             .catch(error => { reject(error) })
@@ -165,9 +166,10 @@ function getAllInstancesBySwimmer(meetingCode, nageurCode) {
                             course.performances = course.performances.filter(performance => performance.nageur.codeIuf === nageurCode);
                         });
 
-                    epreuveInstance.courses = epreuveInstance.courses.filter(course => course.performances.length > 0)
+                    epreuveInstance.courses = epreuveInstance.courses.filter(course => course.performances.length > 0);
 
                 });
+                epreuveList = epreuveList.filter(epreuve => epreuve.courses.length > 0);
                 resolve(epreuveList);
             })
             .catch(error => { reject(error) })

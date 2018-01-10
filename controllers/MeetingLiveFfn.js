@@ -35,7 +35,7 @@ function getMeeting(dom) {
     if (titre) {
         titre = titre.textContent.trim().split('-');
         meeting.nom = titre[0].trim()
-        meeting.bassin = titre[1].split("m")[0].trim();
+        meeting.bassin = titre[titre.length-1].split("m")[0].trim();
     }
 
     var date = dom.window.document.querySelector(".date");
@@ -54,49 +54,6 @@ function getMeeting(dom) {
     return meeting;
 }
 
-function getClub(clubs, element) {
-    return new Promise(async (resolve, reject) => {
-        var newClub = new Club.Instance();
-        newClub.nom = element.textContent.trim();
-        newClub.code = element.querySelector("a").href.split('structure=')[1];
-
-        // Try to find the club in database.
-        var clubInstance = await Club.getInstance(newClub.code);
-        if (clubInstance) {
-            newClub._id = clubInstance._id;
-        }
-
-        var foundClub = clubs.find(club => club.code == newClub.code);
-        if (foundClub) newClub = foundClub
-        else clubs.push(newClub);
-
-        resolve(newClub);
-    })
-}
-
-function getNageur(nageurs, club, tds) {
-    return new Promise(async (resolve, reject) => {
-        var nageur = new Nageur.Instance();
-        nageur.codeIuf = tds[1].querySelector("a").href.split('iuf=')[1];
-        nageur.nom = tds[1].textContent.trim();
-        nageur.anneeNaissance = tds[2].textContent.trim();
-        nageur.nationalite = tds[3].textContent.trim();
-        nageur.club = club;
-
-        // Try to find the nageur in database.
-        var nageurInstance = await Nageur.getInstance(nageur.codeIuf);
-        if (nageurInstance) {
-            nageur._id = nageurInstance._id;
-            nageur.club = nageurInstance.club;
-        }
-
-        var foundNageur = nageurs.find(element => element.codeIuf === nageur.codeIuf);
-        if (foundNageur) nageur = foundNageur
-        else nageurs.push(nageur);
-
-        resolve(nageur);
-    });
-}
 
 function getPerformance(club, nageur, element, tds) {
     var performance = new Performance.Instance();
@@ -114,7 +71,7 @@ function getCourse(element) {
         course = new Course.Instance();
         titre = element.textContent.replace(/(\n\t)/, "").split(/[/(/)]+/);
         course.titre = titre[0].trim();
-        course.date = titre[1].trim();
+        course.date = titre.length > 1 ? titre[1].trim() : "Undefined";
         course.toBeTreated = 0;
     }
 
@@ -144,6 +101,7 @@ class MeetingLiveFfn {
         this.epreuves = [];
         this.nageurs = [];
         this.clubs = [];
+        this.clubsBeingManaged = [];
         this.courses = [];
         this.performances = [];
     }
@@ -176,6 +134,74 @@ class MeetingLiveFfn {
         return this.meeting;
     }
 
+    getClub(element) {
+        return new Promise(async (resolve, reject) => {
+            var newClub = new Club.Instance();
+            newClub.nom = element.textContent.trim();
+            newClub.code = element.querySelector("a").href.split('structure=')[1];
+            
+            if (newClub.code === undefined) {
+                newClub.code = Club.UNDEFINED_CODE;
+            }
+
+            // Verify the club has already been treated.
+            var foundClub = this.clubs.find(club => club.code == newClub.code);
+            if (foundClub) resolve(foundClub);
+
+            // Verify the club is being treated.
+            foundClub = this.clubsBeingManaged.find(club => club.code == newClub.code);
+            if (foundClub) {
+                resolve(foundClub);
+            }
+            else {
+                this.clubsBeingManaged.push(newClub);
+            }
+
+            // Try to find the club in database.
+            var clubInstance = await Club.getInstance(newClub.code);
+            if (clubInstance) {
+                newClub._id = clubInstance._id;
+            }
+            else {
+                // Replace the club contents if it contents has already been treated.
+                foundClub = this.clubsBeingManaged.find(club => club.code == newClub.code);
+                if (foundClub) {
+                    newClub = foundClub;
+                }
+            }
+
+            foundClub = this.clubs.find(club => club.code == newClub.code);
+            if (foundClub) newClub = foundClub
+            else this.clubs.push(newClub);
+
+            resolve(newClub);
+        })
+    }
+
+    getNageur(club, tds) {
+        return new Promise(async (resolve, reject) => {
+            var nageur = new Nageur.Instance();
+            nageur.codeIuf = tds[1].querySelector("a").href.split('iuf=')[1];
+            nageur.nom = tds[1].textContent.trim();
+            nageur.anneeNaissance = tds[2].textContent.trim();
+            nageur.nationalite = tds[3].textContent.trim();
+            nageur.club = club;
+
+            // Try to find the nageur in database.
+            var nageurInstance = await Nageur.getInstance(nageur.codeIuf);
+            if (nageurInstance) {
+                nageur._id = nageurInstance._id;
+                nageur.club = nageurInstance.club;
+            }
+
+            var foundNageur = this.nageurs.find(element => element.codeIuf === nageur.codeIuf);
+            if (foundNageur) nageur = foundNageur
+            else this.nageurs.push(nageur);
+
+            resolve(nageur);
+        });
+    }
+
     getEpreuveData(dom) {
         return new Promise((resolve, reject) => {
             var epreuve = getEpreuve(dom);
@@ -189,8 +215,8 @@ class MeetingLiveFfn {
                         var club, nageur, performance, myCourse = course;
                         performanceToBeTreated++;
                         myCourse.toBeTreated++;
-                        club = await getClub(this.clubs, tds[4]);
-                        nageur = await getNageur(this.nageurs, club, tds);
+                        club = await this.getClub(tds[4]);
+                        nageur = await this.getNageur(club, tds);
                         performance = getPerformance(club, nageur, element, tds);
                         myCourse.performances.push(performance);
                         this.performances.push(performance);
@@ -222,18 +248,18 @@ class MeetingLiveFfn {
 
             this.getEpreuveData(dom)
                 .then(epreuve => {
-                    this.epreuves.push( epreuve) ;
+                    this.epreuves.push(epreuve);
 
                     epreuve.courses.forEach(course => {
                         log.info("course = ", course.titre, ' - ', course.performances.length);
                     });
 
                     this.clubs.forEach(club => {
-                        log.info("club = ", club.nom, ' - ', club._id);
+                        log.info("club = ", club.nom, ' - ', club.code);
                     });
 
                     this.nageurs.forEach(nageur => {
-                        log.info("nageur = ", nageur.nom, ' - ', nageur._id);
+                        //log.info("nageur = ", nageur.nom, ' - ', nageur._id);
                     });
 
                     resolve(epreuve);
@@ -261,11 +287,13 @@ class MeetingLiveFfn {
             log.info("fromUrl :", urlPath);
             JSDOM.fromURL(urlPath, OPTIONS_URL)
                 .then(dom => {
+                    log.info("Parse ", urlPath);
                     return this.getData(dom);
                 })
                 .then(epreuveUpdated => {
-                    log.info(urlPath, "epreuveUpdated :", epreuveUpdated.meetingCode, epreuveUpdated.epreuveCode );
-                    resolve(epreuveUpdated);
+                    log.info(urlPath, "epreuveUpdated :", epreuveUpdated.meetingCode, epreuveUpdated.epreuveCode);
+                    if (epreuveUpdated.meetingCode && epreuveUpdated.epreuveCode) resolve(epreuveUpdated);
+                    else resolve(undefined);
                 })
                 .catch(reject);
         })
@@ -273,21 +301,30 @@ class MeetingLiveFfn {
 
     static getAllMeetingEpreuve(competitionCode) {
         return new Promise((resolve, reject) => {
-            var meeting = new MeetingLiveFfn();            
-            JSDOM.fromURL("http://www.liveffn.com/cgi-bin/resultats.php?competition="+competitionCode+"&langue=fra&go=epreuve", OPTIONS_URL)
+            var meeting = new MeetingLiveFfn();
+            JSDOM.fromURL("http://www.liveffn.com/cgi-bin/resultats.php?competition=" + competitionCode + "&langue=fra&go=epreuve", OPTIONS_URL)
                 .then(dom => {
-                    var epreuveListUrl = Array.from(dom.window.document.querySelectorAll(".options option")).filter(url => url.value !="").map(element => element.value);
+                    var epreuveListUrl = Array.from(dom.window.document.querySelectorAll(".options"))
+                        .filter(option => !option.textContent.includes("Relais"))
+                        .map(option => Array.from(option.querySelectorAll("option"))
+                            .filter(url => url.value != "")
+                            .map(element => element.value))
+                        .reduce((a, b) => a.concat(b));
+
                     var promises = [];
-                    epreuveListUrl.forEach( element => {
+                    epreuveListUrl.forEach(element => {
                         promises.push(meeting.fromUrl(element));
                     })
                     return Promise.all(promises);
                 })
-                .then( epreuveList  => {
-                    epreuveList.forEach( epreuve => {
-                        epreuve.courses.forEach( course => {
+                .then(epreuveList => {
+                    // Remove all the epreuve that looks not correct.
+                    epreuveList = epreuveList.filter(epreuve => epreuve !== undefined);
+
+                    epreuveList.forEach(epreuve => {
+                        epreuve.courses.forEach(course => {
                             log.info("epreuve : ", course.date, " ", course.titre);
-                        })  
+                        })
                     })
                     resolve(meeting)
                 })
@@ -297,6 +334,7 @@ class MeetingLiveFfn {
 
     saveAllData() {
         var promises = [];
+        promises.push(Meeting.createInstance(this.meeting));
         promises.push(Club.createAllInstances(this.clubs));
         promises.push(Nageur.createAllInstances(this.nageurs));
         promises.push(Performance.createAllInstances(this.performances));
